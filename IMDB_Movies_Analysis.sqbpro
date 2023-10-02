@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/Personal Data/Newton School/SQL Lite/Databases/IMDB_Movies_Analysis.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="1219"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,16:mainDirector_mapping"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="Director_mapping" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="71"/><column index="2" value="81"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="Genre" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="71"/><column index="2" value="65"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="Movies" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort><column index="1" mode="0"/></sort><column_widths><column index="1" value="64"/><column index="2" value="300"/><column index="3" value="40"/><column index="4" value="107"/><column index="5" value="63"/><column index="6" value="300"/><column index="7" value="163"/><column index="8" value="300"/><column index="9" value="300"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="Names" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="74"/><column index="2" value="171"/><column index="3" value="49"/><column index="4" value="98"/><column index="5" value="247"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="Ratings" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="71"/><column index="2" value="79"/><column index="3" value="84"/><column index="4" value="101"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="Role_mapping" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="71"/><column index="2" value="81"/><column index="3" value="67"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="IMDB_Movies_Analysis.sql">----------------------------- Segment 1: Database - Tables, Columns, Relationships -----------------------------
+
+-- Find the total number of rows in each table of the schema.
+
+	SELECT COUNT(*) as `NUMBER OF ROWS` FROM Movies;
+	SELECT COUNT(*) as `NUMBER OF ROWS` FROM Director_mapping;
+	SELECT COUNT(*) as `NUMBER OF ROWS` FROM Genre;
+	SELECT COUNT(*) as `NUMBER OF ROWS` FROM Names;
+	SELECT COUNT(*) as `NUMBER OF ROWS` FROM Ratings;
+	SELECT COUNT(*) as `NUMBER OF ROWS` FROM Role_mapping;
+	
+-- Identify which columns in the movie table have null values.
+​
+	SELECT 
+	SUM (CASE WHEN country IS NULL THEN 1 ELSE 0 END) AS `NULL VALUES IN COUNTRY`,
+	SUM (CASE WHEN languages IS NULL THEN 1 ELSE 0 END) AS `NULL VALUES IN LANGUAGES`,
+	SUM (CASE WHEN id IS NULL THEN 1 ELSE 0 END) AS `NULL VALUES IN ID`,
+	SUM (CASE WHEN title IS NULL THEN 1 ELSE 0 END) AS `NULL VALUES IN TITLE`,
+	SUM (CASE WHEN date_published IS NULL THEN 1 ELSE 0 END) AS `NULL VALUES IN DATE_PUBLISHED`,
+	SUM (CASE WHEN duration IS NULL THEN 1 ELSE 0 END) AS `NULL VALUES IN DURATION`,
+	SUM (CASE WHEN worlwide_gross_income IS NULL THEN 1 ELSE 0 END) AS `NULL VALUES IN WORLWIDE_GROSS_INCOME`,
+	SUM (CASE WHEN production_company IS NULL THEN 1 ELSE 0 END) AS `NULL VALUES IN PRODUCTION_COMPANY`,
+	SUM (CASE WHEN year IS NULL THEN 1 ELSE 0 END) AS `NULL VALUES IN YEAR`
+	FROM Movies;
+
+
+-------------------------------------- Segment 2: Movie Release Trends --------------------------------------
+
+-- Determine the total number of movies released each year and analyse the month-wise trend.
+​
+	SELECT year AS RELEASED_YEAR, SUBSTR(date_published, 4, 2) as MONTH, COUNT(id) as NUMBER_OF_MOVIES_RELEASED
+	FROM Movies
+	GROUP BY 1, 2
+	ORDER BY 1, 2;
+​
+-- Calculate the number of movies produced in the USA or India in the year 2019.
+​
+	SELECT COUNT(id) as `NUMBER OF MOVIES RELEASED`
+	FROM Movies
+	WHERE (country LIKE '%India%' OR country LIKE '%USA%') AND year = 2019;
+​
+​
+---------------------------- Segment 3: Production Statistics and Genre Analysis ----------------------------
+
+-- Retrieve the unique list of genres present in the dataset.
+
+	SELECT DISTINCT genre AS MOVIE_GENRE
+	FROM Genre G
+	JOIN Movies M ON (M.id = G.movie_id);
+​
+-- Identify the genre with the highest number of movies produced overall.
+​
+	SELECT genre AS GENRE_NAME, COUNT(movie_id) AS NUMBER_OF_MOVIES
+	FROM Genre
+	GROUP BY 1
+	ORDER BY 2 DESC
+	LIMIT 1;
+​
+-- Determine the count of movies that belong to only one genre.
+​
+	WITH GENRE_COUNT AS
+	(SELECT movie_id, COUNT(DISTINCT genre)
+	 FROM GENRE
+	 GROUP BY 1
+	 HAVING COUNT(DISTINCT genre) = 1)
+	SELECT COUNT(movie_id) AS COUNT_OF_MOVIES FROM GENRE_COUNT;
+​
+-- Calculate the average duration of movies in each genre.
+​
+	​SELECT genre AS GENRE_NAME, AVG(duration) AS AVERAGE_DURATION
+	FROM Movies
+	JOIN Genre ON Movies.id = genre.movie_id
+	GROUP by 1;
+
+-- Find the rank of the 'thriller' genre among all genres in terms of the number of movies produced.
+​
+	WITH GENRE_RANKING AS
+	(SELECT genre AS GENRE_NAME, COUNT(movie_id) AS COUNT_OF_MOVIES
+	 FROM Movies M
+	 JOIN genre G ON M.id = G.movie_id
+	 GROUP BY 1
+	 ORDER BY 2 DESC)
+	SELECT *, RANK() OVER (ORDER BY COUNT_OF_MOVIES DESC) AS GENRE_RANK FROM GENRE_RANKING;
+​
+​
+------------------------------ Segment 4: Ratings Analysis and Crew Members ------------------------------
+​
+-- Retrieve the minimum and maximum values in each column of the ratings table (except movie_id).
+​
+	SELECT
+	MAX(avg_rating) AS MAX_AVERAGE_RATING,
+	MIN(avg_rating) AS MIN_AVERAGE_RATING,
+	MAX(total_votes) AS MAX_TOTAL_VOTES,
+	MIN(total_votes) AS MIN_TOTAL_VOTES,
+	MAX(median_rating) AS MAX_MEDIAN_RATING,
+	MIN(median_rating) AS MIN_MEDIAN_RATING
+	FROM Ratings;
+​
+-- Identify the top 10 movies based on average rating.
+​
+	SELECT title AS TOP_10_MOVIES, avg_rating AS AVERAGE_RATING
+	FROM Movies M
+	JOIN Ratings R ON M.id = R.movie_id
+	ORDER BY 2 DESC
+	LIMIT 10;
+
+-- Summarise the ratings table based on movie counts by median ratings.
+
+	SELECT median_rating AS `THE MEDIAN RATING VALUE`, COUNT(movie_id) AS `COUNT OF MOVIES`
+	FROM Ratings
+	GROUP BY 1;
+
+-- Identify the production house that has produced the greatest number of hit movies (average rating &gt; 8).
+​
+	SELECT production_company AS `PRODUCTION HOUSE`, COUNT(id) AS `COUNT OF MOVIES`
+	FROM Movies M JOIN Ratings R ON M.id = R.movie_id
+	WHERE avg_rating &gt; 8
+	GROUP BY 1
+	ORDER BY 2 DESC;
+​
+-- Determine the number of movies released in each genre during March 2017 in the USA with more than 1,000 votes.
+​
+	SELECT genre AS `GENRE NAME`, COUNT(id) AS `NUMBER OF MOVIES`
+	FROM Movies M
+	JOIN Genre G ON M.id = G.movie_id
+	JOIN Ratings R ON M.id = R.movie_id
+	WHERE total_votes &gt; 1000 AND SUBSTR(date_published, 4, 10) = '03-2017' AND country LIKE '%USA%'
+	GROUP BY 1;
+​
+-- Retrieve movies of each genre starting with the word 'The' and having an average rating &gt; 8.
+​
+	SELECT genre AS `GENRE NAME`, title AS `MOVIE NAME`
+	FROM Movies M
+	JOIN Ratings R ON M.id = R.movie_id
+	JOIN Genre G ON R.movie_id = G.movie_id
+	WHERE title LIKE 'The %' AND avg_rating &gt; 8
+	ORDER BY 1;
+
+​
+------------------------------------------ Segment 5: Crew Analysis ------------------------------------------
+​
+-- Identify the columns in the names table that have null values.
+
+	SELECT
+	COUNT (CASE WHEN id IS NULL THEN 1 END) AS `NULL VALUES IN ID`,
+	COUNT (CASE WHEN name IS NULL THEN 1 END) AS `NULL VALUES IN NAME`,
+	COUNT (CASE WHEN height IS NULL THEN 1 END) AS `NULL VALUES IN HEIGHT`,
+	COUNT (CASE WHEN date_of_birth IS NULL THEN 1 END) AS `NULL VALUES IN DATE_OF_BIRTH`,
+	COUNT (CASE WHEN known_for_movies IS NULL THEN 1 END) AS `NULL VALUES IN KNOWN_FOR_MOVIES`
+	FROM Names;
+​
+-- Determine the top three directors in the top three genres with movies having an average rating &gt; 8.
+
+	WITH CTE1 AS
+	(SELECT genre AS `GENRE NAME`, AVG(avg_rating) AS `AVERAGE RATING`, name_id AS `DIRECTOR ID`
+	 FROM Movies 
+	 JOIN Genre ON Movies.id = Genre.movie_id
+	 JOIN Ratings ON Movies.id = Ratings.movie_id
+	 JOIN Director_mapping ON Movies.id = Director_mapping.movie_id
+	 GROUP BY 1, 3
+	 HAVING `AVERAGE RATING` &gt; 8
+	 ORDER BY 1 ASC, 2 DESC),
+	/* Ranking for director */
+	CTE2 AS
+	(SELECT *, ROW_NUMBER() OVER(PARTITION BY `GENRE NAME` ORDER BY `AVERAGE RATING` DESC) AS RANK
+	 FROM CTE1
+	 WHERE `DIRECTOR ID` IS NOT NULL
+	 ORDER BY RANK),
+	/* Identification of top 3 genre */
+	CTE3 AS
+	(SELECT genre, AVG(avg_rating)
+	 FROM Movies
+	 JOIN Genre ON Movies.id = Genre.movie_id
+	 JOIN Ratings ON Movies.id = Ratings.movie_id
+	 GROUP BY 1
+	 ORDER BY 2 DESC
+	 LIMIT 3)
+	/* Filtering to get rank &lt;= 3 */
+	/* Filtering top 3 genre */
+	SELECT `GENRE NAME`, name as `DIRECTOR NAME`, `AVERAGE RATING`
+	FROM CTE2
+	JOIN Names ON CTE2.`DIRECTOR ID` = Names.id
+	WHERE RANK &lt;= 3 AND `GENRE NAME` IN (SELECT genre FROM CTE3)
+	ORDER BY 1, 3 DESC;​
+​
+-- Find the top two actors whose movies have a median rating &gt;= 8.
+​
+	SELECT name AS `ACTOR NAME`, AVG(median_rating) AS `AVERAGE MEDIAN RATING`
+	FROM Names N
+	JOIN Role_mapping RM ON N.id = RM.name_id
+	JOIN Ratings R ON RM.movie_id = R.movie_id
+	WHERE median_rating &gt;= 8 AND category = 'actor'
+	GROUP BY 1
+	ORDER BY 2 DESC
+	LIMIT 2;
+​
+-- Identify the top three production houses based on the number of votes received by their movies.
+​
+	SELECT production_company AS `PRODUCTION HOUSE`, SUM(total_votes) AS `TOTAL VOTES`
+	FROM Movies M
+	JOIN Ratings R ON M.id = R.movie_id
+	GROUP BY 1
+	ORDER BY 2 DESC
+	LIMIT 3;
+​
+-- Rank actors based on their average ratings in Indian movies released in India.
+​
+	SELECT
+	name AS `ACTOR NAME`,
+	AVG(avg_rating) AS `AVERAGE RATING`,
+	RANK() OVER(ORDER BY AVG(avg_rating) DESC) AS RANK
+	FROM Names N
+	JOIN Role_mapping RM ON N.id = RM.name_id
+	JOIN Ratings R ON RM.movie_id = R.movie_id
+	JOIN Movies M ON R.movie_id = M.id
+	WHERE country LIKE '%India%' AND category = 'actor'
+	GROUP BY 1;
+
+-- Identify the top five actresses in Hindi movies released in India based on their average ratings.
+​
+	SELECT
+	name AS `ACTRESS NAME`,
+	AVG(avg_rating) AS `AVERAGE RATING`
+	FROM Names N
+	JOIN Role_mapping RM ON N.id = RM.name_id
+	JOIN Ratings R ON RM.movie_id = R.movie_id
+	JOIN Movies M ON R.movie_id = M.id
+	WHERE country LIKE '%India%' AND languages LIKE '%Hindi%' AND category = 'actress'
+	GROUP BY 1
+	ORDER BY 2 DESC
+	LIMIT 5;
+
+
+----------------------------------- Segment 6: Broader Understanding of Data -----------------------------------
+
+-- Classify thriller movies based on average ratings into different categories.
+​
+	SELECT
+	id AS `MOVIE ID`,
+	title AS `MOVIE NAME`,
+	avg_rating AS `AVERAGE RATING VALUE`,
+	CASE WHEN avg_rating &gt; (SELECT AVG(avg_rating) FROM Ratings) THEN 'Hit Movie'
+		 WHEN avg_rating &lt; (SELECT AVG(avg_rating) FROM Ratings) THEN 'Flop Movie'
+		 ELSE 'Average Movie'
+		 END AS `MOVIE CATEGORY`
+	FROM Movies M
+	JOIN Genre G ON M.id = G.movie_id
+	JOIN Ratings R ON G.movie_id = R.movie_id
+	WHERE genre = 'Thriller'
+	ORDER BY 3 DESC;
+​
+-- Analyse the genre-wise running total and moving average of the average movie duration.
+​
+	SELECT
+	id AS `MOVIE ID`,
+	title AS `MOVIE NAME`,
+	genre AS `GENRE NAME`,
+	duration AS RUNTIME,
+	SUM(duration) OVER(PARTITION BY genre ORDER BY id ASC) `CUMULATIVE SUMMATION`,
+	AVG(duration) OVER(PARTITION BY genre ORDER BY id ASC) `MOVING AVERAGE`
+	FROM Movies
+	JOIN Genre ON Movies.id = Genre.movie_id
+	ORDER BY 3, 1;
+	
+-- Identify the five highest-grossing movies of each year that belong to the top three genres.
+
+	WITH CTE1 AS
+	(SELECT genre AS `GENRE NAME`
+	 FROM Genre
+	 LIMIT 3)
+	SELECT
+	`GENRE NAME`,
+	year AS `RELEASED YEAR`,
+	title AS `MOVIE NAME`,
+	worlwide_gross_income AS `GROSS EARNING`
+	FROM
+	CTE
+	JOIN
+	Movies M ON CTE.movie_id = M.id
+	WHERE
+	year IS NOT NULL
+	AND worlwide_gross_income IS NOT NULL
+	AND RANK() OVER (PARTITION BY year, genre ORDER BY worlwide_gross_income DESC) &lt;= 5
+	ORDER BY 2, 1, 4 DESC;
+	
+	1. cte1 : year wise get top 3 genre 
+	2. cte2 : movies with highest grossing at genre and year level
+	   
+	3. select * from cte2 inner join cte1 on (cte1.genre = cte2.genre) nd 
+	(cte1.year = cte2.year)
+	
+​
+​
+-	Determine the top two production houses that have produced the 
+    highest number of hits among multilingual movies.
+	
+	select id , production_company , languages
+	from movies where  languages like '%,%'
+​
+​
+-	Identify the top three actresses based on the number of Super Hit
+     movies (average rating &gt; 8) in the drama genre.
+​
+join table (movies , role_mapping , ratings , genre)
+filter avg_rating &gt; 8 
+name_id , count(id)   group by name_id  sort desc
+​
+select * from role_mapping
+​
+-	Retrieve details for the top nine directors based on 
+    the number of movies, including average inter-movie duration, ratings, and more.
+​
+number of movies =	count(id)
+average inter-movie duration = avg(duration)
+ ratings = avg(avg_rating)
+	
+	
+	select  director_mapping.name_id as director_id ,
+	
+	count(id) as Num_of_movies,
+	avg(duration) as avg_movie_duration,
+	avg(avg_rating) as avg_rating
+	
+from movies 
+left join genre on (movies.id = genre.movie_id)
+left join ratings on (movies.id = ratings.movie_id)
+left join director_mapping on (movies.id = director_mapping.movie_id)
+--left join names on (director_mapping.name_id = names.id)
+where  director_mapping.name_id is not null
+group by director_mapping.name_id order by Num_of_movies desc
+​
+select * from names
+select * from director_mapping</sql><current_tab id="0"/></tab_sql></sqlb_project>
